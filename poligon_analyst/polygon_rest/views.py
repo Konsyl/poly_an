@@ -1,6 +1,7 @@
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views import View
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -18,21 +19,47 @@ class is_ok(View):
         return HttpResponse("OK")
 
 
-class DotController(APIView):
-
+class DotsController(APIView):
     def get(self, request):
         dots = Dot.objects.all()
         serializer = DotSerializer(dots, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        dot = DotSerializer(data=request.data)
-        if dot.is_valid():
-            dot.save()
-            return Response(status=201)
+        serializer = DotSerializer(data=request.data, many=False)
+        if serializer.is_valid():
+            if serializer.create(validated_data=serializer.validated_data):
+                return Response(serializer.data)
+            else:
+                return Response('BAD REQUEST')
+        else:
+            return Response('BAD REQUEST')
 
 
 class DotController(APIView):
+    def get(self, request, pk, format=None):
+        dot = get_object_or_404(Dot.objects.all(), pk=pk)
+        serializer = DotSerializer(dot, many=False)
+        return Response(serializer.data)
+
+    def delete(self, request, pk, format=None):
+        dot = Dot.objects.get(pk=pk)
+        if dot.frectangle is not None:
+            dot.delete()
+            return Response('complete')
+        else:
+            return Response("not allowed delete rectangel's dots")
+
+    def put(self, request, pk, format=None):
+        dot = get_object_or_404(Dot.objects.all(), pk=pk)
+        if dot.frectangle is not None:
+            serializer = DotSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.update(validated_data=serializer.validated_data, instance=dot)
+
+                return Response(DotSerializer(dot).data)
+        else:
+            return Response("not allowed update rectangle's dots")
 
     def post(self, request):
         dot = Dot()
@@ -46,7 +73,6 @@ class DotController(APIView):
         res = []
         for i in extansions.temp_res:
             res.append(i[1])
-
         serializer = DotSerializer(res, many=True)
         print(extansions.temp_res)
         return Response(serializer.data)

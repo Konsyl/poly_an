@@ -5,7 +5,7 @@ from django.db import models
 # Create your models here.
 
 MAX_COUNT = 8  # maximum of number dots in rectangle
-MAX_COUNT_C = 8 # rectangles in rectangle
+MAX_COUNT_C = 8  # rectangles in rectangle
 MIN_COUNT = 1  # minimum of number dots in rectangle
 
 
@@ -29,7 +29,6 @@ class Dot(models.Model):
         return hash((self.x, self.y, self.desc))
 
     def dot_in(self, rect):
-
         """check of affiliation"""
         if self.x <= rect.d1.x and self.x >= rect.d0.x and self.y <= rect.d0.y and self.y >= rect.d3.y:
             return True
@@ -60,8 +59,6 @@ class Rectangle(models.Model):
     d2 = models.ForeignKey(Dot, on_delete=models.CASCADE, related_name='d2')
     d3 = models.ForeignKey(Dot, on_delete=models.CASCADE, related_name='d3')
 
-
-
     def info(self):
         return self.d0.info(), self.d1.info(), self.d2.info(), self.d3.info()
 
@@ -71,27 +68,27 @@ class Rectangle(models.Model):
 
     def expand(self, dot, number):
 
-        t_d=self.get_dots()[number]
+        t_d = self.get_dots()[number]
         t_d.x = max(dot.x, self.get_dots()[number].x)
         t_d.save()
 
-        t_d=self.get_dots()[number]
+        t_d = self.get_dots()[number]
         t_d.y = max(dot.y, self.get_dots()[number].y)
         t_d.save()
         if number % 2 == 0:
 
-            t_d=self.get_dots()[(number - 1) %4]
+            t_d = self.get_dots()[(number - 1) % 4]
             t_d.x = max(dot.x, self.get_dots()[(number - 1) % 4].x)
             t_d.save()
-            t_d=self.get_dots()[(number + 1) %4]
+            t_d = self.get_dots()[(number + 1) % 4]
             t_d.y = max(dot.y, self.get_dots()[(number + 1) % 4].y)
             t_d.save()
         else:
 
-            t_d=self.get_dots()[(number - 1) % 4]
-            t_d.y = max(dot.y, self.get_dots()[ (number - 1) % 4].y)
+            t_d = self.get_dots()[(number - 1) % 4]
+            t_d.y = max(dot.y, self.get_dots()[(number - 1) % 4].y)
             t_d.save()
-            t_d=self.get_dots()[(number + 1) % 4]
+            t_d = self.get_dots()[(number + 1) % 4]
             t_d.x = max(dot.x, self.get_dots()[(number + 1) % 4].x)
             t_d.save()
 

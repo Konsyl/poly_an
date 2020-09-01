@@ -20,13 +20,14 @@ def paste(to, dot):
         if dot.dot_in(to):
             dot.save()  # собственно сохранение
             to.frectangle.dots.add(dot)
-            print('YES')
+
         else:
-            print('ошибка в paste', dot.info())
+            #print('ошибка в paste', dot.info())
             return False
 
     else:
-        print('это не точка')
+        pass
+        #print('это не точка')
 
 
 def create_rectangle(dots):
@@ -38,10 +39,6 @@ def create_rectangle(dots):
             d2.save()
             d3.save()
             rectangle = Rectangle.objects.create(d0=d0, d1=d1, d2=d2, d3=d3)
-            # rectangle.d0 = d0
-            # rectangle.d1 = d1
-            # rectangle.d2 = d2
-            # rectangle.d3 = d3
             rectangle.children.set([])
             rectangle.save()  # промежуточные вершины
             return rectangle
@@ -60,11 +57,6 @@ def create_Frectangle(dots):
             d2.save()
             d3.save()
             frectangle = FRectangle.objects.create(d0=d0, d1=d1, d2=d2, d3=d3)
-            # frectangle.d0 = d0
-            # frectangle.d1 = d1
-            # frectangle.d2 = d2
-            # frectangle.d3 = d3
-            # frectangle.save()
             frectangle.dots.set([])
             frectangle.save()  # dots in rectangle
             return frectangle
@@ -121,6 +113,7 @@ def search_of_pair(rect):
 
     return x_left, x_right
 
+
 def check_is_not_f(rect):
     is_not_fr = False
     try:
@@ -129,18 +122,16 @@ def check_is_not_f(rect):
         is_not_fr = True
     return is_not_fr
 
-def check_count(number,node,rect):
-    print('проверка')
-    # проверяем финальный
+
+def check_count(number, node, rect):
+    """ check frectangle count """
     if rect.frectangle.dots.count() > MAX_COUNT:
-        print('деление финального')
-        # Если в измененном прямоугольнике стало больше максимума точек
-        # необходимо разделение
+        # need separation
         (d0, d1, d2, d3) = rect.get_dots()
 
         l, r = search_of_pair(rect)
 
-        print(l,r,d0,d1,d2,d3)
+        #print(l, r, d0, d1, d2, d3)
         temp1 = create_Frectangle(dots=(d0, create_dot(x=l, y=d0.y),
                                         create_dot(x=l, y=d3.y), d3))
 
@@ -149,32 +140,28 @@ def check_count(number,node,rect):
 
         for i in rect.frectangle.dots.all():
             if i.dot_in(rect=temp1):
-                paste(to=temp1,dot=i)
+                paste(to=temp1, dot=i)
             else:
-                paste(to=temp2,dot=i)
+                paste(to=temp2, dot=i)
 
-        lsch = [node.children.all()]
-        lsch[number].delete()
+        children = [node.children.all()]
+        children[number].delete()
         node.children.add(temp1)
         node.children.add(temp2)
 
 
 def insert_in(node, dot):
-    # если node - промежуточная вершина
-
     if check_is_not_f(node):
+        # if node - rectangle
         if node.children.count() != 0:
             for (number, rect) in enumerate(node.children.all()):
                 if dot.dot_in(rect):
-                    # найден подходящий прямоугольник - переходим в него
                     if not insert_in(rect, dot):
-                        return False  # дубль
-                    print('удачно')
+                        return False
 
                     if not check_is_not_f(rect):
                         check_count(number=number, node=node, rect=rect)
                     else:
-                        # проверяем промежуточный
                         if rect.children.count() > MAX_COUNT_C:
 
                             (d0, d1, d2, d3) = rect.get_dots()
@@ -188,31 +175,31 @@ def insert_in(node, dot):
                                                            d2, create_dot(x=r, y=d2.y)))
 
                             l = rect.children.count() // 2
-                            rect.children.all()
+
+                            temp_rect_children = rect.children.all()
 
                             for i in range(l // 2):
-                                temp_ch = rect.children.all()[i]
-                                rect.children.all()[i].delete()
+                                temp_ch = temp_rect_children[i]
+                                temp_rect_children[i].delete()
                                 temp1.children.add(temp_ch)
 
                             for i in range(l // 2, l):
-                                temp_ch = rect.children.all()[i]
-                                rect.children.all()[i].delete()
+                                temp_ch = temp_rect_children[i]
+                                temp_rect_children[i].delete()
                                 temp2.children.add(temp_ch)
                             temp1.save()
                             temp2.save()
                             rect.children.add(temp1, temp2)
                     return True
-                    #
-            # не нашли подходящего - иницируем расширение ближайшего
-            distances = [dot.distance(child)[0] for child in node.children.all()]  # ближайший прямоугольник
-            numb_min = distances.index(min(distances))  # номер ближайшего прямоугольника
+            temp_children = node.children.all()
+            distances = [dot.distance(child)[0] for child in temp_children]
+            numb_min = distances.index(min(distances))
 
-            temp_dist, numb_dot = dot.distance(node.children.all()[numb_min])  # ближайшая вершина
-            node.children.all()[numb_min].expand(dot=dot, number=numb_dot)  # инициируем расширение
+            temp_dist, numb_dot = dot.distance(temp_children[numb_min])
+            temp_children[numb_min].expand(dot=dot, number=numb_dot)
 
-            insert_in(node.children.all()[numb_min], dot)  # вставка точки в получившийся прямогугольник
-            check_count(number=numb_min, rect=node.children.all()[numb_min], node=node)
+            insert_in(temp_children[numb_min], dot)
+            check_count(number=numb_min, rect=temp_children[numb_min], node=node)
             return True
 
         else:
