@@ -1,1 +1,0 @@
-web: gunicorn poligon_analyst.wsgi --log-file -
