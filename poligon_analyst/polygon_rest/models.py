@@ -4,15 +4,16 @@ from django.db import models
 
 # Create your models here.
 
-MAX_COUNT = 8  # maximum of number dots in rectangle
-MAX_COUNT_C = 8  # rectangles in rectangle
+MAX_COUNT = 30  # maximum of number dots in rectangle
+MAX_COUNT_C = 11  # rectangles in rectangle
 MIN_COUNT = 1  # minimum of number dots in rectangle
+NUMBER_OF_GRAND = 1
 
 
 class Dot(models.Model):
     x = models.FloatField(default=0)
     y = models.FloatField(default=0)
-    desc = models.CharField(max_length=255, default='Пустая точка')
+    desc = models.CharField(max_length=255, default='Точка базы', blank=False)
     frectangle = models.ForeignKey('FRectangle', on_delete=models.CASCADE, related_name='dots', null=True, blank=True)
 
     def info(self):
@@ -30,7 +31,8 @@ class Dot(models.Model):
 
     def dot_in(self, rect):
         """check of affiliation"""
-        if self.x <= rect.d1.x and self.x >= rect.d0.x and self.y <= rect.d0.y and self.y >= rect.d3.y:
+        #print(type(self.x), type(self.y), type(rect.d1.x), type(rect.d0.x), type(rect.d0.y),  type(rect.d3.y))
+        if (self.x <= rect.d1.x) and (self.x >= rect.d0.x) and (self.y <= rect.d0.y) and (self.y >= rect.d3.y):
             return True
         else:
             return False
@@ -67,31 +69,41 @@ class Rectangle(models.Model):
         return [self.d0, self.d1, self.d2, self.d3]
 
     def expand(self, dot, number):
+        #print(self.info())
+        #print(dot.info())
+        #d0, d1, d2, d3 = self.get_dots()
+        #if not all([d0.y == d1.y, d0.x == d3.x, d1.x == d2.x, d2.y == d3.y]):
+        #    print('сломан до expand-а', d0.y, d1.y, d0.x, d2.x, d2.y)
+        dots = self.get_dots()
+        t_d = dots[number]
+        t_e = dots[(number + 2) % 4]
 
-        t_d = self.get_dots()[number]
-        t_d.x = max(dot.x, self.get_dots()[number].x)
+        if math.fabs(t_d.x-t_e.x) < math.fabs(dot.x-t_e.x):
+            t_d.x = dot.x
+        if math.fabs(t_d.y - t_e.y) < math.fabs(dot.y - t_e.y):
+            t_d.y = dot.y
         t_d.save()
 
-        t_d = self.get_dots()[number]
-        t_d.y = max(dot.y, self.get_dots()[number].y)
-        t_d.save()
         if number % 2 == 0:
-
-            t_d = self.get_dots()[(number - 1) % 4]
-            t_d.x = max(dot.x, self.get_dots()[(number - 1) % 4].x)
-            t_d.save()
-            t_d = self.get_dots()[(number + 1) % 4]
-            t_d.y = max(dot.y, self.get_dots()[(number + 1) % 4].y)
-            t_d.save()
+            t_s = dots[(number - 1) % 4]
+            t_s.x = t_d.x
+            t_s.save()
+            t_s = dots[(number + 1) % 4]
+            t_s.y = t_d.y
+            t_s.save()
         else:
+            t_s = dots[(number - 1) % 4]
+            t_s.y = t_d.y
+            t_s.save()
+            t_s = dots[(number + 1) % 4]
+            t_s.x = t_d.x
+            t_s.save()
+        #
+        #d0, d1, d2, d3 = self.get_dots()
+        #if not all([d0.y == d1.y, d0.x == d3.x, d1.x == d2.x, d2.y == d3.y]):
+        #    print('сломан после expand')
 
-            t_d = self.get_dots()[(number - 1) % 4]
-            t_d.y = max(dot.y, self.get_dots()[(number - 1) % 4].y)
-            t_d.save()
-            t_d = self.get_dots()[(number + 1) % 4]
-            t_d.x = max(dot.x, self.get_dots()[(number + 1) % 4].x)
-            t_d.save()
-
+        #print(self.info())
     def rect_in_circ(self, c, r):
         # in rectangle
         if c.dot_in(rect=self):
@@ -118,4 +130,6 @@ class Rectangle(models.Model):
 
 
 class FRectangle(Rectangle):
+    def __hash__(self):
+        return hash((self.d0, self.d1, self.d2, self.d3, self.children_a))
     pass
