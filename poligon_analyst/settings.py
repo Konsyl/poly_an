@@ -138,5 +138,4 @@ USE_TZ = True
 import os
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-import os
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
