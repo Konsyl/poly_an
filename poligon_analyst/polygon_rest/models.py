@@ -1,8 +1,5 @@
 import math
-
 from django.db import models
-
-# Create your models here.
 
 MAX_COUNT = 30  # maximum of number dots in rectangle
 MAX_COUNT_C = 11  # rectangles in rectangle
@@ -31,7 +28,6 @@ class Dot(models.Model):
 
     def dot_in(self, rect):
         """check of affiliation"""
-        #print(type(self.x), type(self.y), type(rect.d1.x), type(rect.d0.x), type(rect.d0.y),  type(rect.d3.y))
         if (self.x <= rect.d1.x) and (self.x >= rect.d0.x) and (self.y <= rect.d0.y) and (self.y >= rect.d3.y):
             return True
         else:
@@ -69,11 +65,6 @@ class Rectangle(models.Model):
         return [self.d0, self.d1, self.d2, self.d3]
 
     def expand(self, dot, number):
-        #print(self.info())
-        #print(dot.info())
-        #d0, d1, d2, d3 = self.get_dots()
-        #if not all([d0.y == d1.y, d0.x == d3.x, d1.x == d2.x, d2.y == d3.y]):
-        #    print('сломан до expand-а', d0.y, d1.y, d0.x, d2.x, d2.y)
         dots = self.get_dots()
         t_d = dots[number]
         t_e = dots[(number + 2) % 4]
@@ -98,12 +89,7 @@ class Rectangle(models.Model):
             t_s = dots[(number + 1) % 4]
             t_s.x = t_d.x
             t_s.save()
-        #
-        #d0, d1, d2, d3 = self.get_dots()
-        #if not all([d0.y == d1.y, d0.x == d3.x, d1.x == d2.x, d2.y == d3.y]):
-        #    print('сломан после expand')
 
-        #print(self.info())
     def rect_in_circ(self, c, r):
         # in rectangle
         if c.dot_in(rect=self):
@@ -121,7 +107,6 @@ class Rectangle(models.Model):
         elif c.x <= self.d3.x and c.y <= self.d3.y:
             if self.d3.dot_in_circ(c=c, r=r):
                 return True
-        # sides
         elif math.fabs(c.x - self.d0.x) <= r or math.fabs(c.x - self.d1.x) <= r:
             return True
         elif math.fabs(c.y - self.d0.y) <= r or math.fabs(c.y - self.d3.y) <= r:

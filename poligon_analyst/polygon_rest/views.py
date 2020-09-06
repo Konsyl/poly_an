@@ -1,22 +1,16 @@
-from asgiref.sync import sync_to_async, async_to_sync
 from django.http import HttpResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.views import View
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from polygon_rest.models import Dot, Rectangle, NUMBER_OF_GRAND
 from polygon_rest.serializers import DotSerializer
 from polygon_rest import extansions
 
 
-# Create your views here.
-
-import datetime
-class is_ok(View):
+class IsOk(View):
     def get(self, request):
-        return HttpResponse("WORK")
+        return HttpResponse("WORKING")
 
 
 class DotsController(APIView):
@@ -37,7 +31,7 @@ class DotsController(APIView):
         else:
             return HttpResponse(status=400)
 
-import asyncio
+
 class DotController(APIView):
     def get(self, request, pk, format=None):
         dot = get_object_or_404(Dot.objects.all(), pk=pk)
@@ -69,12 +63,12 @@ class DotController(APIView):
         dot.y = float(request.data['y'])
         r = float(request.data['R'])
         k = int(request.data['K'])
-        grand_node = Rectangle.objects.get(pk=NUMBER_OF_GRAND)
+        grand_node = Rectangle.objects.select_related('children_a').get(pk=NUMBER_OF_GRAND)
         extansions.temp_res = []
         extansions.search(node=grand_node, R=r, K=k, dot=dot)
         res = []
         for i in extansions.temp_res:
             res.append(i[1])
         serializer = DotSerializer(res, many=True)
-        print(res)
+
         return Response(serializer.data)
