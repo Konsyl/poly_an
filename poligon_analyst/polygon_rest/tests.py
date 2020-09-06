@@ -5,7 +5,6 @@ import random
 import datetime
 
 
-# Create your tests here.
 class DotTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -42,7 +41,6 @@ class DotTestCase(TestCase):
                 x, y = (random.uniform(i - 0.5, i), random.uniform(j - 0.5, j))
                 response = c.post(path='/poligon/dots/', data={'x': x, 'y': y, 'desc': 'dot ({0},{1})'.format(x, y)})
                 self.assertEqual(response.status_code, 200)
-
         c = Client()
         t = datetime.datetime.now()
 

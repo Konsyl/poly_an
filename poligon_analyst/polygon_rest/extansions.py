@@ -1,8 +1,6 @@
 import sys
-import asyncio
-from polygon_rest.models import Dot, Rectangle, FRectangle, MAX_COUNT_C, MAX_COUNT, MIN_COUNT
+from polygon_rest.models import Dot, Rectangle, FRectangle, MAX_COUNT_C, MAX_COUNT
 
-# Functions
 eps = sys.float_info.epsilon * 10000000000
 
 
@@ -15,6 +13,7 @@ def create_dot(x, y, desc='Пустая точка'):
 
 
 temp_dots_list = {}
+cache_count = 19
 
 
 def paste(to, dot):
@@ -24,51 +23,30 @@ def paste(to, dot):
         temp_dots_list[to] = [dot]
     else:
         temp_dots_list[to].append(dot)
-    if len(temp_dots_list[to]) > 19:
+    if len(temp_dots_list[to]) > cache_count:
         dots_list = []
         for dot in temp_dots_list[to]:
             dot.save()
             dots_list.append(dot)
-            # return True
             to.frectangle.dots.add(*dots_list)
             temp_dots_list.clear()
-
     return True
-
-    # if type(dot) == Dot:
-    # print('вставка точки')
-    # dot.save()  # собственно сохранение
-    # to.frectangle.dots.add(dot)
-
-    # print('ошибка в paste', dot.info())
-    # return False
-
-    # else:
-    #   pass
-    # print('это не точка')
 
 
 def create_rectangle(dots):
     (d0, d1, d2, d3) = dots
     if all([d0.y == d1.y, d0.x == d3.x, d1.x == d2.x, d2.y == d3.y]):
         if d0.x < d1.x and d0.y > d2.y:
-
-            # Dot.objects.bulk_create(
-            #    objs=[d0, d1, d2, d3]
-            # )
-
             d0.save()
             d1.save()
             d2.save()
             d3.save()
             rectangle = Rectangle.objects.create(d0=d0, d1=d1, d2=d2, d3=d3)
-            # rectangle.children.set([])
-            # rectangle.save()  # промежуточные вершины
             return rectangle
         else:
-            print('не правильный порядок вершин', (d0, d1, d2, d3))
+            raise Exception('Bad rectangle')
     else:
-        print('это не прямоугольник')
+        raise Exception('Bad rectangle')
 
 
 def create_Frectangle(dots):
@@ -133,6 +111,7 @@ def search_of_four(rect):
 
     return dot0, dot1, dot2, dot3
 
+
 def check_is_not_f(rect):
     try:
         type(rect.frectangle)
@@ -159,7 +138,6 @@ def check_count(node, rect):
         temp_ld = create_Frectangle(dots=(create_dot(x=d3.x, y=ld.y), ld,
                                           create_dot(x=ld.x, y=d3.y), d3))
 
-
         for i in rect.frectangle.dots.all():
             if i.dot_in(rect=temp_lu):
                 paste(to=temp_lu, dot=i)
@@ -178,31 +156,36 @@ def check_count(node, rect):
         return False
 
 
+def check_children(node, temp_children, dot):
+    for rect in temp_children:
+        if dot.dot_in(rect):
+            if not insert_in(rect, dot):
+                return False
+            if not check_is_not_f(rect):
+                if check_count(node=node, rect=rect):
+                    count = 0
+                    for fre in node.children.all():
+                        if not check_is_not_f(fre):
+                            count += 1
+                        if count > MAX_COUNT_C:
+                            future_list = []
+                            for child in node.children.all():
+                                (d0, d1, d2, d3) = child.get_dots()
+                                temp = create_rectangle(dots=(d0, d1, d2, d3))
+                                node.children.remove(child)
+                                temp.children.add(child)
+                                future_list.append(temp)
+                            node.children.add(*future_list)
+                            break
+            return True
+
+
 def insert_in(node, dot):
     if check_is_not_f(node):
         if node.children.count() != 0:
             temp_children = node.children.all()
-            for rect in temp_children:
-                if dot.dot_in(rect):
-                    if not insert_in(rect, dot):
-                        return False
-                    if not check_is_not_f(rect):
-                        if check_count(node=node, rect=rect):
-                            count = 0
-                            for fre in node.children.all():
-                                if not check_is_not_f(fre):
-                                    count += 1
-                                if count > MAX_COUNT_C:
-                                    future_list = []
-                                    for child in node.children.all():
-                                        (d0, d1, d2, d3) = child.get_dots()
-                                        temp = create_rectangle(dots=(d0, d1, d2, d3))
-                                        node.children.remove(child)
-                                        temp.children.add(child)
-                                        future_list.append(temp)
-                                    node.children.add(*future_list)
-                                    break
-                    return True
+            if check_children(node=node, temp_children=temp_children, dot=dot):
+                return True
             distances = [dot.distance(child)[0] for child in temp_children]
             numb_min = distances.index(min(distances))
             temp_dist, numb_dot = dot.distance(temp_children[numb_min])
@@ -228,12 +211,15 @@ def insert_in(node, dot):
                 paste(to=node.children.all()[0].frectangle, dot=dot)
                 return True
             else:
-                raise Exception('bad dot', 'bad')
+                raise Exception('bad dot', 'bad dot')
     else:
         paste(to=node, dot=dot)
         return True
 
+
 temp_res = []
+
+
 def search(node, dot, R, K):
     if check_is_not_f(node):
         if node.rect_in_circ(c=dot, r=R):
