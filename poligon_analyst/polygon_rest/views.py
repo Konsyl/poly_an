@@ -15,7 +15,7 @@ class IsOk(View):
 
 class DotsController(APIView):
     def get(self, request):
-        dots = Dot.objects.all()
+        dots = Dot.objects.filter(frectangle=True).all()
         serializer = DotSerializer(dots, many=True)
         return Response(serializer.data)
 
