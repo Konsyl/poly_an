@@ -91,7 +91,10 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+import dj_database_url
 
+db_drom_env = dj_database_url.config(conn_max_age=600)
+DATABASES['default'].update(db_drom_env)
 #if 'test' in sys.argv:
 #DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3'}}
 
