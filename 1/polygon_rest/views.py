@@ -17,8 +17,7 @@ class DotsController(APIView):
     def get(self, request):
         dots = Dot.objects.filter(frectangle_id__isnull=False)
         serializer = DotSerializer(dots, many=True)
-        #return Response(serializer.data)
-        return HttpResponse(status=200)
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = DotSerializer(data=request.data, many=False)
