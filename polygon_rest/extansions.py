@@ -28,8 +28,8 @@ def paste(to, dot):
         for dot in temp_dots_list[to]:
             dot.save()
             dots_list.append(dot)
-            to.frectangle.dots.add(*dots_list)
-            temp_dots_list.clear()
+        to.frectangle.dots.add(*dots_list)
+    temp_dots_list.clear()
     return True
 
 
