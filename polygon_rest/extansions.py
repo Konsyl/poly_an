@@ -13,7 +13,7 @@ def create_dot(x, y, desc='Пустая точка'):
 
 
 temp_dots_list = {}
-cache_count = 19
+cache_count = 1
 
 
 def paste(to, dot):
